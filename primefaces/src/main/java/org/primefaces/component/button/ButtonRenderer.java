@@ -48,7 +48,7 @@ public class ButtonRenderer extends OutcomeTargetRenderer {
     public void encodeMarkup(FacesContext context, Button button) throws IOException {
         ResponseWriter writer = context.getResponseWriter();
         String clientId = button.getClientId(context);
-        String value = (String) button.getValue();
+        Object value = button.getValue();
         String icon = button.getIcon();
         String title = button.getTitle();
 
