@@ -26,7 +26,6 @@ package org.primefaces.component.repeat;
 import java.io.IOException;
 import java.sql.ResultSet;
 import java.util.*;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.el.ValueExpression;
@@ -48,8 +47,6 @@ import javax.faces.render.Renderer;
 import org.primefaces.component.api.IterationStatus;
 import org.primefaces.component.api.SavedState;
 import org.primefaces.component.api.UITabPanel;
-import org.primefaces.config.PrimeEnvironment;
-import org.primefaces.context.PrimeApplicationContext;
 import org.primefaces.model.IterableDataModel;
 import org.primefaces.util.ComponentUtils;
 import org.primefaces.util.Constants;
@@ -525,15 +522,6 @@ public class UIRepeat extends UINamingContainer {
         // stop if not rendered
         if (!this.isRendered())
             return;
-        
-        PrimeEnvironment environment = PrimeApplicationContext.getCurrentInstance(faces).getEnvironment();
-        if (environment.isMojarra()) {
-            LOGGER.log(Level.WARNING, "Mojarra versions 2.3.18, 3.0.3, and 4.0+ do not require p:repeat, "
-                        + "please upgrade and switch to ui:repeat.");
-        }
-        else {
-            LOGGER.log(Level.WARNING, "Apache MyFaces does not require p:repeat, please switch to ui:repeat.");
-        }
 
         // clear datamodel
         this.resetDataModel();
