@@ -1155,8 +1155,16 @@ public class DataTableRenderer extends DataRenderer {
         ELContext elContext = context.getELContext();
 
         SortMeta sort = table.getHighestPriorityActiveSortMeta();
-        boolean encodeHeaderRow = headerRow != null && headerRow.isEnabled() && sort != null;
-        boolean encodeSummaryRow = (summaryRow != null && sort != null);
+        ValueExpression groupBy = sort != null ? sort.getSortBy() : null;
+
+        // a summaryRow may define the group itself, which is the only way to group without a headerRow (GitHub #14295)
+        ValueExpression summaryGroupBy = summaryRow != null ? summaryRow.getGroupByValueExpression(context, table.getVar()) : null;
+        if (summaryGroupBy == null) {
+            summaryGroupBy = groupBy;
+        }
+
+        boolean encodeHeaderRow = headerRow != null && headerRow.isEnabled() && groupBy != null;
+        boolean encodeSummaryRow = (summaryRow != null && summaryGroupBy != null);
 
         for (int i = first; i < last; i++) {
             table.resetDynamicColumns();
@@ -1168,7 +1176,7 @@ public class DataTableRenderer extends DataRenderer {
 
             table.setRowIndex(i);
 
-            if (encodeHeaderRow && (i == first || !isInSameGroup(context, table, i, -1, sort.getSortBy(), elContext))) {
+            if (encodeHeaderRow && (i == first || !isInSameGroup(context, table, i, -1, groupBy, elContext))) {
                 table.setRowIndex(i);
                 encodeHeaderRow(context, table, headerRow);
             }
@@ -1176,9 +1184,9 @@ public class DataTableRenderer extends DataRenderer {
             table.setRowIndex(i);
             encodeRow(context, table, clientId, i, columnStart, columnEnd);
 
-            if (encodeSummaryRow && !isInSameGroup(context, table, i, 1, sort.getSortBy(), elContext)) {
+            if (encodeSummaryRow && !isInSameGroup(context, table, i, 1, summaryGroupBy, elContext)) {
                 table.setRowIndex(i);
-                encodeSummaryRow(context, summaryRow, sort);
+                encodeSummaryRow(context, summaryRow, summaryGroupBy);
             }
         }
     }
@@ -1204,9 +1212,13 @@ public class DataTableRenderer extends DataRenderer {
     }
 
     protected void encodeSummaryRow(FacesContext context, SummaryRow summaryRow, SortMeta sort) throws IOException {
+        encodeSummaryRow(context, summaryRow, sort == null ? null : sort.getSortBy());
+    }
+
+    protected void encodeSummaryRow(FacesContext context, SummaryRow summaryRow, ValueExpression groupBy) throws IOException {
         MethodExpression me = summaryRow.getListener();
         if (me != null) {
-            me.invoke(context.getELContext(), new Object[]{sort.getSortBy()});
+            me.invoke(context.getELContext(), new Object[]{groupBy});
         }
 
         summaryRow.encodeAll(context);

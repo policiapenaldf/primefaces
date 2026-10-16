@@ -27501,6 +27501,22 @@
         </attribute>
         <attribute>
             <description>
+                <![CDATA[Name of the field associated to bean "var", used for grouping when there is no headerRow.]]>
+            </description>
+            <name>field</name>
+            <required>false</required>
+            <type>java.lang.String</type>
+        </attribute>
+        <attribute>
+            <description>
+                <![CDATA[Property to be used for grouping when there is no headerRow.]]>
+            </description>
+            <name>groupBy</name>
+            <required>false</required>
+            <type>java.lang.Object</type>
+        </attribute>
+        <attribute>
+            <description>
                 <![CDATA[Method expression to execute before rendering summary row. (e.g. to calculate totals)]]>
             </description>
             <name>listener</name>
