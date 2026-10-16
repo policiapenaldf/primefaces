@@ -11,7 +11,10 @@
     <name>PrimeFaces 12.0.X (build customizado SEAPE)</name>
     <url>https://www.primefaces.org</url>
 
-    <!-- Para compilar uma versão nova: mvn clean install -Prelease "-Dlicense.skip=true" "-Dgpg.skip=true" "-Drevision=$(Get-Date -Format yyyyMMdd.HHmm)" -->
+    <!-- Para publicar uma versão nova no GitHub Packages (bibliotecas_avulsas):
+         mvn clean deploy -pl primefaces -am -Prelease "-Dlicense.skip=true" "-Dgpg.skip=true" "-DskipTests" "-Drevision=$(Get-Date -Format yyyyMMdd.HHmm)" "-DaltDeploymentRepository=github::https://maven.pkg.github.com/policiapenaldf/bibliotecas_avulsas"
+         O altDeploymentRepository é obrigatório: o perfil release o aponta para target/staging-deploy e nada seria enviado.
+         Para só instalar localmente, troque "deploy" por "install" e remova o altDeploymentRepository. -->
     <description>
         <![CDATA[PrimeFaces is one of the most popular UI libraries in Java EE Ecosystem and widely used by software companies, world renowned brands, banks, financial institutions, insurance companies, universities and more.]]>
     </description>
