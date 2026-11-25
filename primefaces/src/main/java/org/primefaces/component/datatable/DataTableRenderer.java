@@ -1090,8 +1090,16 @@ public class DataTableRenderer extends DataRenderer {
         HeaderRow headerRow = table.getHeaderRow();
 
         SortMeta sort = table.getHighestPriorityActiveSortMeta();
-        boolean encodeHeaderRow = headerRow != null && headerRow.isEnabled() && sort != null;
-        boolean encodeSummaryRow = (!summaryRows.isEmpty() && sort != null);
+        ValueExpression groupBy = sort != null ? sort.getSortBy() : null;
+
+        // a summaryRow may define the group itself, which is the only way to group without a headerRow (GitHub #14295)
+        ValueExpression summaryGroupBy = resolveSummaryGroupBy(context, table, summaryRows);
+        if (summaryGroupBy == null) {
+            summaryGroupBy = groupBy;
+        }
+
+        boolean encodeHeaderRow = headerRow != null && headerRow.isEnabled() && groupBy != null;
+        boolean encodeSummaryRow = (!summaryRows.isEmpty() && summaryGroupBy != null);
 
         for (int i = first; i < last; i++) {
             table.resetDynamicColumns();
@@ -1103,7 +1111,7 @@ public class DataTableRenderer extends DataRenderer {
 
             table.setRowIndex(i);
 
-            if (encodeHeaderRow && (i == first || !isInSameGroup(context, table, i, -1, sort.getSortBy(), false))) {
+            if (encodeHeaderRow && (i == first || !isInSameGroup(context, table, i, -1, groupBy, false))) {
                 table.setRowIndex(i);
                 encodeHeaderRow(context, table, headerRow);
             }
@@ -1111,11 +1119,28 @@ public class DataTableRenderer extends DataRenderer {
             table.setRowIndex(i);
             encodeRow(context, table, clientId, i, columnStart, columnEnd);
 
-            if (encodeSummaryRow && !isInSameGroup(context, table, i, 1, sort.getSortBy(), i == last - 1)) {
+            if (encodeSummaryRow && !isInSameGroup(context, table, i, 1, summaryGroupBy, i == last - 1)) {
                 table.setRowIndex(i);
-                encodeSummaryRow(context, summaryRows, sort);
+                encodeSummaryRow(context, summaryRows, summaryGroupBy);
             }
         }
+    }
+
+    /**
+     * Resolves the group defined by the summary rows themselves, the first one declaring a group wins.
+     * All summary rows share this one group, distinct groups per summary row are not supported.
+     *
+     * @return the group by {@link ValueExpression} or <code>null</code> when no summary row defines a group
+     */
+    protected ValueExpression resolveSummaryGroupBy(FacesContext context, DataTable table, List<SummaryRow> summaryRows) {
+        for (int i = 0; i < summaryRows.size(); i++) {
+            ValueExpression groupBy = summaryRows.get(i).getGroupByValueExpression(context, table.getVar());
+            if (groupBy != null) {
+                return groupBy;
+            }
+        }
+
+        return null;
     }
 
     protected void encodeFrozenRows(FacesContext context, DataTable table, int columnStart, int columnEnd) throws IOException {
@@ -1138,12 +1163,22 @@ public class DataTableRenderer extends DataRenderer {
         writer.endElement("tbody");
     }
 
+    /**
+     * No longer called by this renderer, only kept so subclassed renderers calling or overriding it still compile.
+     *
+     * @deprecated use {@link #encodeSummaryRow(FacesContext, List, ValueExpression)} instead
+     */
+    @Deprecated
     protected void encodeSummaryRow(FacesContext context, List<SummaryRow> summaryRows, SortMeta sort) throws IOException {
+        encodeSummaryRow(context, summaryRows, sort == null ? null : sort.getSortBy());
+    }
+
+    protected void encodeSummaryRow(FacesContext context, List<SummaryRow> summaryRows, ValueExpression groupBy) throws IOException {
         for (int i = 0; i < summaryRows.size(); i++) {
             SummaryRow summaryRow = summaryRows.get(i);
             MethodExpression me = summaryRow.getListener();
             if (me != null) {
-                me.invoke(context.getELContext(), new Object[]{sort.getSortBy()});
+                me.invoke(context.getELContext(), new Object[]{groupBy});
             }
 
             summaryRow.encodeAll(context);

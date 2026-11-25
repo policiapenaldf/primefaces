@@ -34,6 +34,8 @@ public abstract class SummaryRowBase extends UIComponentBase {
 
     public enum PropertyKeys {
 
+        field,
+        groupBy,
         listener
     }
 
@@ -44,6 +46,22 @@ public abstract class SummaryRowBase extends UIComponentBase {
     @Override
     public String getFamily() {
         return COMPONENT_FAMILY;
+    }
+
+    public String getField() {
+        return (String) getStateHelper().eval(PropertyKeys.field, null);
+    }
+
+    public void setField(String field) {
+        getStateHelper().put(PropertyKeys.field, field);
+    }
+
+    public String getGroupBy() {
+        return (String) getStateHelper().eval(PropertyKeys.groupBy, null);
+    }
+
+    public void setGroupBy(String groupBy) {
+        getStateHelper().put(PropertyKeys.groupBy, groupBy);
     }
 
     public javax.el.MethodExpression getListener() {

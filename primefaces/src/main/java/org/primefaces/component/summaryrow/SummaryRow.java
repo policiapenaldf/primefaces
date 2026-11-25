@@ -23,7 +23,31 @@
  */
 package org.primefaces.component.summaryrow;
 
+import javax.el.ValueExpression;
+import javax.faces.context.FacesContext;
+
+import org.primefaces.component.api.UIColumn;
+import org.primefaces.util.LangUtils;
+
 public class SummaryRow extends SummaryRowBase {
 
     public static final String COMPONENT_TYPE = "org.primefaces.component.SummaryRow";
+
+    /**
+     * Returns the expression this summary row groups by. When neither <code>groupBy</code> nor <code>field</code>
+     * is set, the group is defined by the table itself (header row or active sort).
+     *
+     * @param context the {@link FacesContext}
+     * @param var the name of the request-scoped variable of the enclosing table
+     * @return the group by {@link ValueExpression} or <code>null</code> if this summary row defines no group
+     */
+    public ValueExpression getGroupByValueExpression(FacesContext context, String var) {
+        ValueExpression groupByVE = getValueExpression(PropertyKeys.groupBy.name());
+        if (groupByVE != null) {
+            return groupByVE;
+        }
+
+        String field = getField();
+        return LangUtils.isBlank(field) ? null : UIColumn.createValueExpressionFromField(context, var, field);
+    }
 }
